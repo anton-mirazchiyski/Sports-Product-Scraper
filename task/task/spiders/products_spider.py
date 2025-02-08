@@ -1,3 +1,5 @@
+import random
+import time
 from typing import Any
 
 import scrapy
@@ -46,6 +48,7 @@ class SportsProductSpider(scrapy.Spider):
             color = self.get_single_data_by_selector('span.swatchName--KWu4Q', response, driver)
             available_colors.append(color)
             button_element.click()
+            time.sleep(random.uniform(2, 5))
 
         return available_colors
 
