@@ -22,17 +22,32 @@ class SportsProductSpider(scrapy.Spider):
         price = self.get_single_data_by_selector('span.pricing.nowPrice', response, driver)
         current_color = self.get_single_data_by_selector('span.swatchName--KWu4Q', response, driver)
 
+        available_colors = self.get_all_available_colors(response, driver)
+
         self.close_driver(driver)
 
         print(name, price, current_color)
+        print(available_colors)
 
         product_data = {
             'name': name,
             'price': price,
             'color': current_color,
+            'available_colors': available_colors,
         }
 
         yield product_data
+
+    def get_all_available_colors(self, response, driver):
+        button_elements = driver.find_elements(by=By.CSS_SELECTOR, value='button.buttonWrapper--S9sgu')
+        available_colors = []
+
+        for button_element in button_elements:
+            color = self.get_single_data_by_selector('span.swatchName--KWu4Q', response, driver)
+            available_colors.append(color)
+            button_element.click()
+
+        return available_colors
 
     @staticmethod
     def get_single_data_by_selector(selector, response, driver):
