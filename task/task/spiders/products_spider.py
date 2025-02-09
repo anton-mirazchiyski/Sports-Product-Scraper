@@ -18,24 +18,25 @@ class SportsProductSpider(scrapy.Spider):
     ]
 
     def parse(self, response: Response, **kwargs: Any) -> Any:
-        driver = self.setup_driver(urls_idx=0)
+        driver_options = self.set_driver_options()
+        driver = self.setup_driver(0, driver_options)
 
-        name = self.get_single_data_by_selector('h1', response, driver)
+        name = self.get_single_data_by_selector('h1.productTitle--FWmyK', response, driver)
         price = self.get_single_data_by_selector('span.pricing.nowPrice', response, driver)
         current_color = self.get_single_data_by_selector('span.swatchName--KWu4Q', response, driver)
 
-        available_colors = self.get_all_available_colors(response, driver)
+        # available_colors = self.get_all_available_colors(response, driver)
 
         self.close_driver(driver)
 
         print(name, price, current_color)
-        print(available_colors)
+        # print(available_colors)
 
         product_data = {
             'name': name,
             'price': price,
             'color': current_color,
-            'available_colors': available_colors,
+            # 'available_colors': available_colors,
         }
 
         yield product_data
@@ -65,8 +66,14 @@ class SportsProductSpider(scrapy.Spider):
 
         return data.strip()
 
-    def setup_driver(self, urls_idx):
-        driver = webdriver.Firefox()
+    @staticmethod
+    def set_driver_options():
+        options = webdriver.FirefoxOptions()
+        options.add_argument('-headless')
+        return options
+
+    def setup_driver(self, urls_idx, options):
+        driver = webdriver.Firefox(options=options)
         driver.get(self.start_urls[urls_idx])
         return driver
 
