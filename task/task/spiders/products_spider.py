@@ -23,18 +23,19 @@ class SportsProductSpider(scrapy.Spider):
 
         name = self.get_single_data_by_selector('h1.productTitle--FWmyK', response, driver)
         price = self.get_single_data_by_selector('span.pricing.nowPrice', response, driver)
-        current_color = self.get_single_data_by_selector('span.swatchName--KWu4Q', response, driver)
+        current_color, current_size, _ = self.get_data_by_selector('span.swatchName--KWu4Q', response, driver)
 
         # available_colors = self.get_all_available_colors(response, driver)
 
         self.close_driver(driver)
 
-        print(name, price, current_color)
+        # print(name, price, current_color)
         # print(available_colors)
 
         product_data = {
             'name': name,
             'price': price,
+            'size': current_size,
             'color': current_color,
             # 'available_colors': available_colors,
         }
@@ -65,6 +66,19 @@ class SportsProductSpider(scrapy.Spider):
             data = driver.find_element(by=By.CSS_SELECTOR, value=selector).text
 
         return data.strip()
+
+    @staticmethod
+    def get_data_by_selector(selector, response, driver):
+        """
+        Same as the method 'get_single_data_by_selector' but returns a collection of data
+        """
+
+        data = response.css(selector + '::text').getall()
+        if data is None:
+            data = [element.text for element in driver.find_elements(by=By.CSS_SELECTOR, value=selector)]
+
+        data = [text.strip() for text in data]
+        return data
 
     @staticmethod
     def set_driver_options():
