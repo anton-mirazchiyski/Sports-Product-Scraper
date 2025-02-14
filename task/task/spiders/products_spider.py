@@ -7,6 +7,9 @@ from scrapy.http import Response
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+options = webdriver.ChromeOptions()
+options.add_argument('-headless')
+
 
 class SportsProductSpider(scrapy.Spider):
     name = 'product'
@@ -17,21 +20,25 @@ class SportsProductSpider(scrapy.Spider):
         'https://www.academy.com/p/nike-womens-court-legacy-next-nature-shoes'
     ]
 
-    def parse(self, response: Response, **kwargs: Any) -> Any:
-        driver_options = self.set_driver_options()
-        driver = self.setup_driver(0, driver_options)
-        driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
-        time.sleep(5)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.driver = webdriver.Chrome(options=options)
+        self.driver.get(self.start_urls[0])
 
-        name = self.get_single_data_by_selector('h1.productTitle--FWmyK', response, driver)
-        price = self.get_single_data_by_selector('span.pricing.nowPrice', response, driver)
-        collected_data = self.get_data_by_selector('span.swatchName--KWu4Q', response, driver)
+
+    def parse(self, response: Response, **kwargs: Any) -> Any:
+        # driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
+        # time.sleep(5)
+
+        name = self.get_single_data_by_selector('h1.productTitle--FWmyK', response, self.driver)
+        price = self.get_single_data_by_selector('span.pricing.nowPrice', response, self.driver)
+        collected_data = self.get_data_by_selector('span.swatchName--KWu4Q', response, self.driver)
 
         current_colour, current_size, _ = collected_data if collected_data else '', '', ''
 
-        available_colours = self.get_all_available_colors(response, driver)
+        available_colours = self.get_all_available_colors(response, self.driver)
 
-        self.close_driver(driver)
+        self.driver.quit()
 
         product_data = {
             'name': name,
@@ -45,7 +52,6 @@ class SportsProductSpider(scrapy.Spider):
 
     def get_all_available_colors(self, response, driver):
         button_elements = driver.find_elements(by=By.CSS_SELECTOR, value='button.buttonWrapper--S9sgu')
-        print(f'Button elements length = {len(button_elements)}')
         available_colours = []
 
         for button_element in button_elements:
@@ -81,17 +87,3 @@ class SportsProductSpider(scrapy.Spider):
 
         # data = [text.strip() for text in data]
         return data
-
-    @staticmethod
-    def set_driver_options():
-        options = webdriver.ChromeOptions()
-        options.add_argument('-headless')
-        return options
-
-    def setup_driver(self, urls_idx, options):
-        driver = webdriver.Chrome(options=options)
-        driver.get(self.start_urls[urls_idx])
-        return driver
-
-    def close_driver(self, driver):
-        driver.quit()
