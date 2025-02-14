@@ -5,6 +5,7 @@ from typing import Any
 import scrapy
 from scrapy.http import Response
 from selenium import webdriver
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 options = webdriver.ChromeOptions()
@@ -71,9 +72,12 @@ class SportsProductSpider(scrapy.Spider):
 
         data = response.css(selector + '::text').get()
         if data is None:
-            data = driver.find_element(by=By.CSS_SELECTOR, value=selector).text
+            try:
+                data = driver.find_element(by=By.CSS_SELECTOR, value=selector).text
+            except NoSuchElementException:
+                data = None
 
-        return data.strip()
+        return data.strip() if data else None
 
     @staticmethod
     def get_data_by_selector(selector, response, driver):
